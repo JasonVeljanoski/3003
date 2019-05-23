@@ -300,7 +300,7 @@ static void addObject(int id)
         sceneObjs[nObjects].animationStart = float ( glutGet(GLUT_ELAPSED_TIME) );
 
 
-           // Part 2.
+        // Part 2.
         sceneObjs[nObjects].animationStart = 1.0;
         sceneObjs[nObjects].moveSpeed = 1.0;
         sceneObjs[nObjects].moveDist = 5.0;
@@ -367,7 +367,7 @@ void init( void )
     addObject(0); // Square for the ground
     sceneObjs[0].loc = vec4(0.0, 0.0, 0.0, 1.0);
     sceneObjs[0].scale = 10.0;
-    sceneObjs[0].angles[0] = 90.0; // Rotate it.
+    sceneObjs[0].angles[0] = -90.0; // Rotate it.
     sceneObjs[0].texScale = 5.0; // Repeat the texture.
 
     addObject(55); // Sphere for the first light
@@ -385,8 +385,7 @@ void init( void )
 
     addObject(rand() % numMeshes); // A test mesh
 
-    /* (Part XXX) my-imp */
-    // TODO : add to report as another functionality
+    /* (Part EXTRA) my-imp */
     // change starting position of mesh obj to centre (0,0,0)
     sceneObjs[3].loc = vec4(0.0, 0.0, 0.0, 1.0);
     /* end */
@@ -520,13 +519,11 @@ void display( void )
             } else {
                 // time since animation begun in seconds
             	elapsedTime = float ( glutGet( GLUT_ELAPSED_TIME ) - sceneObjs[i].animationStart ) / 1000.0; // time difference from animation start.
-            	//POSE_TIME = elapsedTime; this was me
             }
 
             float period = sceneObjs[i].moveDist / sceneObjs[i].moveSpeed;
             // pose time ranges from 0 to numFrames, looping FPC times in one half movement cycle
             POSE_TIME = fmod( (0.5 + 0.5 * sin( elapsedTime / period * 2 * PI )) * sceneObjs[i].FPC * sceneObjs[i].numFrames, sceneObjs[i].numFrames);
-           
         }  
 
         drawMesh(sceneObjs[i]);
@@ -629,14 +626,12 @@ static int createArrayMenu(int size, const char menuEntries[][128], void(*menuFn
 }
 
 /* Part C. */
-/* TODO : maybe reference lecture slide that helps implement the below */
 static void modifyAmbientDiffuse(vec2 ad) {
 	SceneObject * obj = &sceneObjs[toolObj];
 	(*obj).ambient = max(0.0f, (*obj).ambient + ad[0]);
 	(*obj).diffuse = max(0.0f, (*obj).diffuse + ad[1]);
 }
 /* Part C. */
-/* TODO : maybe reference lecture slide that helps implement the below */
 static void modifySpecularShine(vec2 ss) {
 	SceneObject * obj = &sceneObjs[toolObj];
 	(*obj).specular = max(0.0f, (*obj).specular + ss[0]);
@@ -679,12 +674,17 @@ static void adjustAngleZTexscale(vec2 az_ts)
     sceneObjs[currObject].texScale+=az_ts[1];
 }
 
-// Part xxx
-static void adjustWalkSpeedDist( vec2 walk_sd ) {
-    sceneObjs[currObject].moveSpeed = max(0.0f, sceneObjs[currObject].moveSpeed + walk_sd[0]);
-    sceneObjs[currObject].moveDist = max(0.0f, sceneObjs[currObject].moveDist + walk_sd[1]);
+// Part EXTRA
+static void slowAnim( float s ) {
+    sceneObjs[currObject].moveSpeed -= s;
+    sceneObjs[currObject].moveSpeed = min(0.0f, sceneObjs[currObject].moveSpeed);
+    printf("%f\n",sceneObjs[currObject].moveSpeed); // debug
 }
-
+static void speedAnim( float s ) {
+    sceneObjs[currObject].moveSpeed += s;
+    sceneObjs[currObject].moveSpeed = max(0.0f, sceneObjs[currObject].moveSpeed);
+    printf("%f\n",sceneObjs[currObject].moveSpeed); // debug
+}
 static void mainmenu(int id)
 {
     deactivateTool();
@@ -695,14 +695,14 @@ static void mainmenu(int id)
     }
     if (id == 50)
         doRotate();
-    /* TODO Part B. - adjust texture scale on middle mouse vertical */
+
     /* 55: Rotation/Texture Scale */
     if (id == 55 && currObject>=0) {
         setToolCallbacks(adjustAngleYX, mat2(400, 0, 0, -400), adjustAngleZTexscale, mat2(400, 0, 0, 15) );
     }
-    // Pause all animations Part xxx
+    // Pause all animations Part EXTRA
     if (id == 62) animationPause = glutGet( GLUT_ELAPSED_TIME );
-    // Resume all animations Part xxx
+    // Resume all animations Part EXTRA
     if (id == 63) {
       unsigned int resume = glutGet( GLUT_ELAPSED_TIME );
       for (int i=0; i<nObjects; i++) {
@@ -734,7 +734,10 @@ static void mainmenu(int id)
       }
     }
     if (id == 61) { 
-      setToolCallbacks(adjustWalkSpeedDist, mat2(24.0, 0.0, 0.0, 5.0), adjustWalkSpeedDist, mat2(24.0, 0.0, 0.0, 5.0) );
+      setToolCallbacks(speedAnim, mat2(24.0, 0.0, 0.0, 5.0), speedAnim, mat2(24.0, 0.0, 0.0, 5.0) );
+    }
+    if (id == 60) { 
+      setToolCallbacks(slowAnim, mat2(24.0, 0.0, 0.0, 5.0), slowAnim, mat2(24.0, 0.0, 0.0, 5.0) );
     }
     
     if (id == 99) exit(0);
@@ -768,7 +771,8 @@ static void makeMenu()
     glutAddSubMenu("Lights",lightMenuId);
 
     // Part 2.
-    glutAddMenuEntry("Walk Duration/Distance", 61);
+    glutAddMenuEntry("Decrease Animation Speed", 60);
+    glutAddMenuEntry("Increase Animation Speed", 61);
     glutAddMenuEntry("Pause animations", 62);
     glutAddMenuEntry("Resume animations", 63);
     glutAddMenuEntry("Duplicate current object", 64);
@@ -819,7 +823,7 @@ void reshape( int width, int height )
     GLfloat near = nearDist; // SHOULD BE SUFFICCIENT ?
     GLfloat far = 100; // SHOULD BE SUFFICCIENT ?
 
-    /* TODO: explain further */
+
     /* When width is smaller than height */
     if (width < height) {
       left = -nearDist;
@@ -834,7 +838,7 @@ void reshape( int width, int height )
       bottom = -nearDist;
       top = nearDist;
     }
-    /* TODO: search Frustum function to see what last 2 parameters do */
+
     projection = Frustum(left, right, bottom, top, near, far);
 }
 

@@ -178,7 +178,7 @@ vec2 clickPrev;
 
 static void activateTool(int button) {
     currButton = button;
-    prevPos = currMouseXYscreen(mouseX, mouseY); // Part XXX sticky mosition fixed
+    prevPos = currMouseXYscreen(mouseX, mouseY); // Part EXTRA sticky mosition fixed
 
     // std::cout << clickOrigin << std::endl;  // For debugging
 }
